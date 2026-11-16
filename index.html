@@ -83,6 +83,70 @@
       95% { transform: scaleY(.1); }
     }
     .held-heart { animation: beat 1.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+
+    /* ---------- Sleepy little bear ---------- */
+    .sleepy {
+      position: absolute; right: -8%; bottom: -2%;
+      width: 42%;
+      cursor: pointer;
+      background: none; border: none;
+      z-index: 4;
+      transform-origin: bottom center;
+      animation: snore 3.2s ease-in-out infinite;
+    }
+    .sleepy svg { width: 100%; height: 100%; overflow: visible; }
+    @keyframes snore {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.05) translateY(-3px); }
+    }
+    .snore-bubble {
+      transform-box: fill-box; transform-origin: center;
+      animation: snoreBubble 3.2s ease-in-out infinite;
+    }
+    @keyframes snoreBubble {
+      0%, 100% { transform: scale(.6); opacity: .3; }
+      50% { transform: scale(1.4); opacity: 1; }
+    }
+    .sleepy.hit { animation: sleepyHit .5s ease-out; }
+    @keyframes sleepyHit {
+      0% { transform: scale(1.05) rotate(0); }
+      25% { transform: scale(1.05) rotate(-6deg); }
+      50% { transform: scale(1.05) rotate(6deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .zzz {
+      position: absolute; right: 6%; bottom: 62%;
+      color: #b57edc; font-weight: 600;
+      font-size: .9rem; pointer-events: none;
+      animation: zzz 2.6s ease-out infinite;
+      opacity: 0;
+    }
+    .zzz:nth-child(2) { animation-delay: .9s; font-size: 1.15rem; }
+    .zzz:nth-child(3) { animation-delay: 1.8s; font-size: 1.4rem; }
+    @keyframes zzz {
+      0% { opacity: 0; transform: translate(0, 0) rotate(-8deg); }
+      20% { opacity: .9; }
+      100% { opacity: 0; transform: translate(14px, -34px) rotate(8deg); }
+    }
+
+    /* ---------- Thrown pillow ---------- */
+    .pillow {
+      position: fixed; width: 40px; height: 28px;
+      border-radius: 10px;
+      background: #fff;
+      border: 2px solid #e6d7ff;
+      box-shadow: 0 4px 10px -3px rgba(120, 90, 160, .45);
+      pointer-events: none; z-index: 20;
+      animation: throwPillow .7s cubic-bezier(.35, .6, .4, 1) forwards;
+    }
+    .pillow::after {
+      content: ""; position: absolute; inset: 5px 8px;
+      border-radius: 6px; border: 1.5px dashed #e6d7ff;
+    }
+    @keyframes throwPillow {
+      0% { transform: translate(-50%, -50%) rotate(0deg) scale(.7); }
+      100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(720deg) scale(1); }
+    }
     @keyframes beat {
       0%, 100% { transform: scale(1); }
       20% { transform: scale(1.15); }
@@ -234,6 +298,40 @@
       </svg>
     </button>
 
+    <button class="sleepy" id="sleepy" aria-label="Orsetto che dorme">
+      <span class="zzz" aria-hidden="true">z</span>
+      <span class="zzz" aria-hidden="true">z</span>
+      <span class="zzz" aria-hidden="true">Z</span>
+      <svg viewBox="0 0 160 150" aria-hidden="true">
+        <!-- ears -->
+        <circle cx="42" cy="40" r="20" fill="#c99670"/>
+        <circle cx="42" cy="40" r="10" fill="#f4d6bd"/>
+        <circle cx="118" cy="40" r="20" fill="#c99670"/>
+        <circle cx="118" cy="40" r="10" fill="#f4d6bd"/>
+        <!-- body -->
+        <ellipse cx="80" cy="116" rx="48" ry="32" fill="#d6a983"/>
+        <ellipse cx="80" cy="122" rx="28" ry="20" fill="#f4d6bd"/>
+        <!-- head -->
+        <circle cx="80" cy="72" r="46" fill="#d6a983"/>
+        <!-- muzzle -->
+        <ellipse cx="80" cy="84" rx="20" ry="15" fill="#f4d6bd"/>
+        <!-- closed sleepy eyes -->
+        <path d="M56 66 q7 7 14 0" stroke="#3a2a22" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M90 66 q7 7 14 0" stroke="#3a2a22" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- cheeks -->
+        <ellipse cx="50" cy="82" rx="8" ry="5.5" fill="#f7a1b5" opacity=".7"/>
+        <ellipse cx="110" cy="82" rx="8" ry="5.5" fill="#f7a1b5" opacity=".7"/>
+        <!-- nose + mouth -->
+        <ellipse cx="80" cy="78" rx="6.5" ry="5" fill="#3a2a22"/>
+        <path d="M80 83 v4 M74 87 q6 5 12 0" stroke="#3a2a22" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <!-- little arms -->
+        <ellipse cx="34" cy="116" rx="12" ry="19" fill="#c99670" transform="rotate(30 34 116)"/>
+        <ellipse cx="126" cy="116" rx="12" ry="19" fill="#c99670" transform="rotate(-30 126 116)"/>
+        <!-- snore bubble from nose -->
+        <circle class="snore-bubble" cx="96" cy="74" r="3.5" fill="#fff" stroke="#e6d7ff" stroke-width="1.5"/>
+      </svg>
+    </button>
+
     <div class="hint" id="hint">tocca l'orsetto 🧸</div>
   </div>
 
@@ -328,18 +426,45 @@
 
     // Tap the bear
     const bear = document.getElementById("bear");
+    const sleepy = document.getElementById("sleepy");
     const bubble = document.getElementById("bubble");
     const hint = document.getElementById("hint");
     let hideTimer;
+
+    // Throw a pillow at the snoring little bear
+    function throwPillow() {
+      const from = bear.getBoundingClientRect();
+      const to = sleepy.getBoundingClientRect();
+      const startX = from.left + from.width * 0.5;
+      const startY = from.top + from.height * 0.42;
+      const endX = to.left + to.width * 0.5;
+      const endY = to.top + to.height * 0.45;
+      const p = document.createElement("div");
+      p.className = "pillow";
+      p.style.left = `${startX}px`;
+      p.style.top = `${startY}px`;
+      p.style.setProperty("--tx", `${endX - startX}px`);
+      p.style.setProperty("--ty", `${endY - startY}px`);
+      document.body.appendChild(p);
+      p.addEventListener("animationend", () => {
+        p.remove();
+        sleepy.classList.remove("hit"); void sleepy.offsetWidth; sleepy.classList.add("hit");
+      });
+      setTimeout(() => p.remove(), 900);
+    }
+
     bear.addEventListener("click", (e) => {
+      bubble.textContent = "questi orsecchiottoni che russano... 🤫😤";
       bubble.classList.add("show");
       hint.style.opacity = 0;
       bear.classList.remove("shiver"); void bear.offsetWidth; bear.classList.add("shiver");
       burst(e.clientX, e.clientY, 12);
+      throwPillow();
       clearTimeout(hideTimer);
       hideTimer = setTimeout(() => bubble.classList.remove("show"), 5000);
     });
     bear.addEventListener("animationend", (e) => { if (e.animationName === "shiver") bear.classList.remove("shiver"); });
+    sleepy.addEventListener("animationend", (e) => { if (e.animationName === "sleepyHit") sleepy.classList.remove("hit"); });
 
     document.addEventListener("click", (e) => {
       if (!e.target.closest("#bear")) burst(e.clientX, e.clientY, 6);
